@@ -3,6 +3,9 @@ import pandas as pd
 from snowflake.connector import connect
 import datetime
 
+# Debug informace na začátku
+print("Available secrets:", st.secrets)
+
 # Konfigurace připojení k Snowflake
 def init_connection():
     return connect(
@@ -59,7 +62,7 @@ if 'authenticated' not in st.session_state:
 
 if not st.session_state.authenticated:
     password = st.text_input("Zadejte přístupové heslo:", type="password")
-    if password == st.secrets["app_password"]:
+    if password == st.secrets["general"]["app_password"]:  # Upravený přístup k heslu
         st.session_state.authenticated = True
         st.experimental_rerun()
     else:
