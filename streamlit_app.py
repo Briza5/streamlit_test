@@ -53,17 +53,45 @@ def create_filters():
    with st.sidebar:
        st.header("Filtry")
        filters = {}
-       filters['item'] = st.text_input("Filtr dle typu zboží")
-       filters['order_id'] = st.text_input("Filtr dle čísla zakázky")
-       filters['cust'] = st.text_input("Filtr dle zákazníka")
-       col1, col2 = st.columns(2)
-       with col1:
-           filters['date_from'] = st.date_input("Datum vytvoření od")
-       with col2:
-           filters['date_to'] = st.date_input("Datum vytvoření do")
-       filters['min_sales'] = st.number_input("Min. dodatečný prodej", min_value=0)
-       filters['contacted'] = st.selectbox("Kontaktován", ['Vše', 'Ano', 'Ne'])
-       filters['realized'] = st.selectbox("Realizováno", ['Vše', 'Ano', 'Ne'])
+       
+       # Checkboxy pro aktivaci filtrů
+       filters['use_item'] = st.checkbox("Filtrovat dle typu zboží")
+       if filters['use_item']:
+           filters['item'] = st.text_input("Typ zboží", value="")
+           
+       filters['use_order'] = st.checkbox("Filtrovat dle čísla zakázky") 
+       if filters['use_order']:
+           filters['order_id'] = st.text_input("Číslo zakázky", value="")
+           
+       filters['use_customer'] = st.checkbox("Filtrovat dle zákazníka")
+       if filters['use_customer']:
+           filters['cust'] = st.text_input("Zákazník", value="")
+           
+       filters['use_date_created'] = st.checkbox("Filtrovat dle data vytvoření")
+       if filters['use_date_created']:
+           col1, col2 = st.columns(2)
+           with col1:
+               filters['date_from'] = st.date_input("Od", value=None)
+           with col2:
+               filters['date_to'] = st.date_input("Do", value=None)
+               
+       filters['use_date_realisation'] = st.checkbox("Filtrovat dle termínu realizace")
+       if filters['use_date_realisation']:
+           col1, col2 = st.columns(2)
+           with col1:
+               filters['real_date_from'] = st.date_input("Realizace od", value=None)
+           with col2:
+               filters['real_date_to'] = st.date_input("Realizace do", value=None)
+               
+       filters['use_sales'] = st.checkbox("Filtrovat dle dodatečného prodeje")
+       if filters['use_sales']:
+           filters['min_sales'] = st.number_input("Min. dodatečný prodej", min_value=0, value=0)
+           
+       filters['use_status'] = st.checkbox("Filtrovat dle stavu")
+       if filters['use_status']:
+           filters['contacted'] = st.selectbox("Kontaktován", ['Vše', 'Ano', 'Ne'], index=0)
+           filters['realized'] = st.selectbox("Realizováno", ['Vše', 'Ano', 'Ne'], index=0)
+           
        return filters
 
 def apply_filters(df, filters):
@@ -158,16 +186,16 @@ def update_order(conn, table_name, order_id, updates):
        st.error(f"Chyba při aktualizaci dat: {e}")
        return False
 
-def export_to_csv(df, filename):
-   """Export dataframe do CSV"""
-   csv = df.to_csv(index=False).encode('utf-8')
-   st.download_button(
-       "Stáhnout CSV",
-       csv,
-       filename,
-       "text/csv",
-       key='download-csv'
-   )
+def export_to_csv(df, filename, key_prefix):
+    """Export dataframe do CSV"""
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        "Stáhnout CSV",
+        csv,
+        filename,
+        "text/csv",
+        key=f'download-csv-{key_prefix}'
+    )
 
 def show_statistics(df, title):
    """Zobrazení statistik"""
@@ -296,7 +324,7 @@ if st.session_state.authenticated:
            show_statistics(filtered_df, "Prodejní zakázky")
            
            # Export do CSV
-           export_to_csv(filtered_df, "prodejni_zakazky.csv")
+           export_to_csv(filtered_df, "prodejni_zakazky.csv", "sales")
            
            # Seřazení
            sort_col = 'DATE_CREATED' if 'vytvoření' in sort_by else 'REALISATION_DATE'
@@ -324,7 +352,7 @@ if st.session_state.authenticated:
            show_statistics(filtered_df, "Servisní zakázky")
            
            # Export do CSV
-           export_to_csv(filtered_df, "servisni_zakazky.csv")
+           export_to_csv(filtered_df, "servisni_zakazky.csv", "service")
            
            # Seřazení
            sort_col = 'DATE_CREATED' if 'vytvoření' in sort_by else 'REALISATION_DATE'
