@@ -96,49 +96,41 @@ def create_filters():
        return filters
 
 def apply_filters(df, filters):
-   if df.empty:
-       return df
-       
-   # Převedení datumů na datetime
-   df['DATE_CREATED'] = pd.to_datetime(df['DATE_CREATED'])
-   df['REALISATION_DATE'] = pd.to_datetime(df['REALISATION_DATE'])
-   
-   if filters.get('use_item') and filters.get('item'):
-       df = df[df['ITEM'].str.contains(filters['item'], case=False, na=False)]
-       
-   if filters.get('use_order') and filters.get('order_id'):
-       id_col = 'SAL_HEAD_ID' if 'SAL_HEAD_ID' in df.columns else 'SRV_HEAD_ID'
-       df = df[df[id_col].str.contains(filters['order_id'], case=False, na=False)]
-       
-   if filters.get('use_customer') and filters.get('cust'):
-       df = df[df['CUST'].str.contains(filters['cust'], case=False, na=False)]
-       
-   if filters.get('use_date_created'):
-       if filters.get('date_from'):
-           df = df[df['DATE_CREATED'].dt.date >= filters['date_from']]
-       if filters.get('date_to'):
-           df = df[df['DATE_CREATED'].dt.date <= filters['date_to']]
-           
-   if filters.get('use_date_realisation'):
-       if filters.get('real_date_from'):
-           df = df[df['REALISATION_DATE'].dt.date >= filters['real_date_from']]
-       if filters.get('real_date_to'):
-           df = df[df['REALISATION_DATE'].dt.date <= filters['real_date_to']]
-           
-   if filters.get('use_sales') and filters.get('min_sales', 0) > 0:
-       df = df[df['ADDITIONAL_SALES'] >= filters['min_sales']]
-       
-   if filters.get('use_status'):
-       if filters.get('contacted') != 'Vše':
-           df = df[df['CUSTOMER_CONTACTED'] == (filters['contacted'] == 'Ano')]
-       if filters.get('realized') != 'Vše':
-           df = df[df['IS_REALIZED'] == (filters['realized'] == 'Ano')]
-   
-   # Převod zpět na string pro zobrazení
-   df['DATE_CREATED'] = df['DATE_CREATED'].dt.strftime('%Y-%m-%d')
-   df['REALISATION_DATE'] = df['REALISATION_DATE'].dt.strftime('%Y-%m-%d')
-           
-   return df
+    if df.empty:
+        return df
+    
+    if filters.get('use_item') and filters.get('item'):
+        df = df[df['ITEM'].str.contains(filters['item'], case=False, na=False)]
+        
+    if filters.get('use_order') and filters.get('order_id'):
+        id_col = 'SAL_HEAD_ID' if 'SAL_HEAD_ID' in df.columns else 'SRV_HEAD_ID'
+        df = df[df[id_col].str.contains(filters['order_id'], case=False, na=False)]
+        
+    if filters.get('use_customer') and filters.get('cust'):
+        df = df[df['CUST'].str.contains(filters['cust'], case=False, na=False)]
+        
+    if filters.get('use_date_created'):
+        if filters.get('date_from'):
+            df = df[df['DATE_CREATED'] >= filters['date_from']]
+        if filters.get('date_to'):
+            df = df[df['DATE_CREATED'] <= filters['date_to']]
+            
+    if filters.get('use_date_realisation'):
+        if filters.get('real_date_from'):
+            df = df[df['REALISATION_DATE'] >= filters['real_date_from']]
+        if filters.get('real_date_to'):
+            df = df[df['REALISATION_DATE'] <= filters['real_date_to']]
+            
+    if filters.get('use_sales') and filters.get('min_sales', 0) > 0:
+        df = df[df['ADDITIONAL_SALES'] >= filters['min_sales']]
+        
+    if filters.get('use_status'):
+        if filters.get('contacted') != 'Vše':
+            df = df[df['CUSTOMER_CONTACTED'] == (filters['contacted'] == 'Ano')]
+        if filters.get('realized') != 'Vše':
+            df = df[df['IS_REALIZED'] == (filters['realized'] == 'Ano')]
+            
+    return df
 
 def load_data(conn, is_completed=False):
    if conn is None:
