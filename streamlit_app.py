@@ -97,6 +97,10 @@ def create_filters():
 def apply_filters(df, filters):
    if df.empty:
        return df
+       
+   # Převedení datumů na datetime
+   df['DATE_CREATED'] = pd.to_datetime(df['DATE_CREATED'])
+   df['REALISATION_DATE'] = pd.to_datetime(df['REALISATION_DATE'])
    
    if filters.get('use_item') and filters.get('item'):
        df = df[df['ITEM'].str.contains(filters['item'], case=False, na=False)]
@@ -110,19 +114,15 @@ def apply_filters(df, filters):
        
    if filters.get('use_date_created'):
        if filters.get('date_from'):
-           date_from = filters['date_from'].strftime('%Y-%m-%d')
-           df = df[df['DATE_CREATED'] >= date_from]
+           df = df[df['DATE_CREATED'].dt.date >= filters['date_from']]
        if filters.get('date_to'):
-           date_to = filters['date_to'].strftime('%Y-%m-%d')
-           df = df[df['DATE_CREATED'] <= date_to]
+           df = df[df['DATE_CREATED'].dt.date <= filters['date_to']]
            
    if filters.get('use_date_realisation'):
        if filters.get('real_date_from'):
-           real_date_from = filters['real_date_from'].strftime('%Y-%m-%d')
-           df = df[df['REALISATION_DATE'] >= real_date_from]
+           df = df[df['REALISATION_DATE'].dt.date >= filters['real_date_from']]
        if filters.get('real_date_to'):
-           real_date_to = filters['real_date_to'].strftime('%Y-%m-%d')
-           df = df[df['REALISATION_DATE'] <= real_date_to]
+           df = df[df['REALISATION_DATE'].dt.date <= filters['real_date_to']]
            
    if filters.get('use_sales') and filters.get('min_sales', 0) > 0:
        df = df[df['ADDITIONAL_SALES'] >= filters['min_sales']]
@@ -132,6 +132,10 @@ def apply_filters(df, filters):
            df = df[df['CUSTOMER_CONTACTED'] == (filters['contacted'] == 'Ano')]
        if filters.get('realized') != 'Vše':
            df = df[df['IS_REALIZED'] == (filters['realized'] == 'Ano')]
+   
+   # Převod zpět na string pro zobrazení
+   df['DATE_CREATED'] = df['DATE_CREATED'].dt.strftime('%Y-%m-%d')
+   df['REALISATION_DATE'] = df['REALISATION_DATE'].dt.strftime('%Y-%m-%d')
            
    return df
 
