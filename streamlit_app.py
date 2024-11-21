@@ -136,16 +136,16 @@ def update_order(conn, table_name, order_id, updates):
        st.error(f"Chyba při aktualizaci dat: {e}")
        return False
 
-def export_to_csv(df, filename):
-   """Export dataframe do CSV"""
-   csv = df.to_csv(index=False).encode('utf-8')
-   st.download_button(
-       "Stáhnout CSV",
-       csv,
-       filename,
-       "text/csv",
-       key='download-csv'
-   )
+def export_to_csv(df, filename, key_prefix):
+    """Export dataframe do CSV"""
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        "Stáhnout CSV",
+        csv,
+        filename,
+        "text/csv",
+        key=f'download-csv-{key_prefix}'
+    )
 
 def show_statistics(df, title):
    """Zobrazení statistik"""
@@ -274,7 +274,7 @@ if st.session_state.authenticated:
            show_statistics(filtered_df, "Prodejní zakázky")
            
            # Export do CSV
-           export_to_csv(filtered_df, "prodejni_zakazky.csv")
+           export_to_csv(filtered_df, "prodejni_zakazky.csv", "sales")
            
            # Seřazení
            sort_col = 'DATE_CREATED' if 'vytvoření' in sort_by else 'REALISATION_DATE'
@@ -302,7 +302,7 @@ if st.session_state.authenticated:
            show_statistics(filtered_df, "Servisní zakázky")
            
            # Export do CSV
-           export_to_csv(filtered_df, "servisni_zakazky.csv")
+           export_to_csv(filtered_df, "servisni_zakazky.csv", "service")
            
            # Seřazení
            sort_col = 'DATE_CREATED' if 'vytvoření' in sort_by else 'REALISATION_DATE'
