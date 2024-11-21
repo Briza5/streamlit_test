@@ -305,28 +305,7 @@ if st.session_state.authenticated:
    with st.spinner('Načítání dat...'):
        sales_df, service_df = load_data(conn, show_completed)
 
-   if st.checkbox("Zobrazit debug info"):
-    st.write("=== DEBUG INFO ===")
-    st.write("Datové typy v sales_df:")
-    st.write(sales_df.dtypes)
-    st.write("\nPrvní řádek sales_df:")
-    st.write(dict(sales_df.iloc[0]))  # Převedeno na dictionary pro lepší čitelnost
-    st.write("\nUkázka DATE_CREATED hodnot:")
-    st.write(sales_df['DATE_CREATED'].head())
-    st.write("\nTyp DATE_CREATED:", type(sales_df['DATE_CREATED'].iloc[0]))
-    st.write("\nFiltry:")
-    st.write(filters)
-    if filters.get('date_from'):
-        st.write("Typ date_from:", type(filters['date_from']))
-    st.write("=== END DEBUG ===")
-    # Pak teprve aplikujeme filtry
-    filtered_df = apply_filters(sales_df, filters)
-
-
-
-
-
-   
+     
    # Záložky pro prodejní a servisní zakázky
    tab1, tab2 = st.tabs(["Prodejní zakázky", "Servisní zakázky"])
    
