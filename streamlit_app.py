@@ -53,83 +53,63 @@ def create_filters():
    with st.sidebar:
        st.header("Filtry")
        filters = {}
-       
-       # Checkboxy pro aktivaci filtrů
-       filters['use_item'] = st.checkbox("Filtrovat dle typu zboží")
-       if filters['use_item']:
-           filters['item'] = st.text_input("Typ zboží", value="")
-           
-       filters['use_order'] = st.checkbox("Filtrovat dle čísla zakázky") 
-       if filters['use_order']:
-           filters['order_id'] = st.text_input("Číslo zakázky", value="")
-           
-       filters['use_customer'] = st.checkbox("Filtrovat dle zákazníka")
-       if filters['use_customer']:
-           filters['cust'] = st.text_input("Zákazník", value="")
-           
-       filters['use_date_created'] = st.checkbox("Filtrovat dle data vytvoření")
-       if filters['use_date_created']:
-           col1, col2 = st.columns(2)
-           with col1:
-               filters['date_from'] = st.date_input("Od", value=None)
-           with col2:
-               filters['date_to'] = st.date_input("Do", value=None)
-               
-       filters['use_date_realisation'] = st.checkbox("Filtrovat dle termínu realizace")
-       if filters['use_date_realisation']:
-           col1, col2 = st.columns(2)
-           with col1:
-               filters['real_date_from'] = st.date_input("Realizace od", value=None)
-           with col2:
-               filters['real_date_to'] = st.date_input("Realizace do", value=None)
-               
-       filters['use_sales'] = st.checkbox("Filtrovat dle dodatečného prodeje")
-       if filters['use_sales']:
-           filters['min_sales'] = st.number_input("Min. dodatečný prodej", min_value=0, value=0)
-           
-       filters['use_status'] = st.checkbox("Filtrovat dle stavu")
-       if filters['use_status']:
-           filters['contacted'] = st.selectbox("Kontaktován", ['Vše', 'Ano', 'Ne'], index=0)
-           filters['realized'] = st.selectbox("Realizováno", ['Vše', 'Ano', 'Ne'], index=0)
-           
+       filters['item'] = st.text_input("Filtr dle typu zboží")
+       filters['order_id'] = st.text_input("Filtr dle čísla zakázky")
+       filters['cust'] = st.text_input("Filtr dle zákazníka")
+       col1, col2 = st.columns(2)
+       with col1:
+           filters['date_from'] = st.date_input("Datum vytvoření od")
+       with col2:
+           filters['date_to'] = st.date_input("Datum vytvoření do")
+       filters['min_sales'] = st.number_input("Min. dodatečný prodej", min_value=0)
+       filters['contacted'] = st.selectbox("Kontaktován", ['Vše', 'Ano', 'Ne'])
+       filters['realized'] = st.selectbox("Realizováno", ['Vše', 'Ano', 'Ne'])
        return filters
 
 def apply_filters(df, filters):
-   if df.empty:
-       return df
-   
-   if filters.get('use_item') and filters.get('item'):
-       df = df[df['ITEM'].str.contains(filters['item'], case=False, na=False)]
-       
-   if filters.get('use_order') and filters.get('order_id'):
-       id_col = 'SAL_HEAD_ID' if 'SAL_HEAD_ID' in df.columns else 'SRV_HEAD_ID'
-       df = df[df[id_col].str.contains(filters['order_id'], case=False, na=False)]
-       
-   if filters.get('use_customer') and filters.get('cust'):
-       df = df[df['CUST'].str.contains(filters['cust'], case=False, na=False)]
-       
-   if filters.get('use_date_created'):
-       if filters.get('date_from'):
-           df = df[pd.to_datetime(df['DATE_CREATED']) >= pd.to_datetime(filters['date_from'])]
-       if filters.get('date_to'):
-           df = df[pd.to_datetime(df['DATE_CREATED']) <= pd.to_datetime(filters['date_to'])]
-           
-   if filters.get('use_date_realisation'):
-       if filters.get('real_date_from'):
-           df = df[pd.to_datetime(df['REALISATION_DATE']) >= pd.to_datetime(filters['real_date_from'])]
-       if filters.get('real_date_to'):
-           df = df[pd.to_datetime(df['REALISATION_DATE']) <= pd.to_datetime(filters['real_date_to'])]
-           
-   if filters.get('use_sales') and filters.get('min_sales', 0) > 0:
-       df = df[df['ADDITIONAL_SALES'] >= filters['min_sales']]
-       
-   if filters.get('use_status'):
-       if filters.get('contacted') != 'Vše':
-           df = df[df['CUSTOMER_CONTACTED'] == (filters['contacted'] == 'Ano')]
-       if filters.get('realized') != 'Vše':
-           df = df[df['IS_REALIZED'] == (filters['realized'] == 'Ano')]
-           
-   return df
+    if df.empty:
+        return df
+    
+    # Převod datumových sloupců na správný formát
+    df['DATE_CREATED'] = pd.to_datetime(df['DATE_CREATED'], format='%d.%m.%Y')
+    df['REALISATION_DATE'] = pd.to_datetime(df['REALISATION_DATE'], format='%d.%m.%Y')
+    
+    if filters.get('use_item') and filters.get('item'):
+        df = df[df['ITEM'].str.contains(filters['item'], case=False, na=False)]
+        
+    if filters.get('use_order') and filters.get('order_id'):
+        id_col = 'SAL_HEAD_ID' if 'SAL_HEAD_ID' in df.columns else 'SRV_HEAD_ID'
+        df = df[df[id_col].str.contains(filters['order_id'], case=False, na=False)]
+        
+    if filters.get('use_customer') and filters.get('cust'):
+        df = df[df['CUST'].str.contains(filters['cust'], case=False, na=False)]
+        
+    if filters.get('use_date_created'):
+        if filters.get('date_from'):
+            df = df[df['DATE_CREATED'].dt.date >= filters['date_from']]
+        if filters.get('date_to'):
+            df = df[df['DATE_CREATED'].dt.date <= filters['date_to']]
+            
+    if filters.get('use_date_realisation'):
+        if filters.get('real_date_from'):
+            df = df[df['REALISATION_DATE'].dt.date >= filters['real_date_from']]
+        if filters.get('real_date_to'):
+            df = df[df['REALISATION_DATE'].dt.date <= filters['real_date_to']]
+            
+    if filters.get('use_sales') and filters.get('min_sales', 0) > 0:
+        df = df[df['ADDITIONAL_SALES'] >= filters['min_sales']]
+        
+    if filters.get('use_status'):
+        if filters.get('contacted') != 'Vše':
+            df = df[df['CUSTOMER_CONTACTED'] == (filters['contacted'] == 'Ano')]
+        if filters.get('realized') != 'Vše':
+            df = df[df['IS_REALIZED'] == (filters['realized'] == 'Ano')]
+    
+    # Převod datumů zpět na string pro zobrazení
+    df['DATE_CREATED'] = df['DATE_CREATED'].dt.strftime('%d.%m.%Y')
+    df['REALISATION_DATE'] = df['REALISATION_DATE'].dt.strftime('%d.%m.%Y')
+            
+    return df
 
 def load_data(conn, is_completed=False):
    if conn is None:
@@ -178,16 +158,16 @@ def update_order(conn, table_name, order_id, updates):
        st.error(f"Chyba při aktualizaci dat: {e}")
        return False
 
-def export_to_csv(df, filename, key_prefix):
-    """Export dataframe do CSV"""
-    csv = df.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        "Stáhnout CSV",
-        csv,
-        filename,
-        "text/csv",
-        key=f'download-csv-{key_prefix}'
-    )
+def export_to_csv(df, filename):
+   """Export dataframe do CSV"""
+   csv = df.to_csv(index=False).encode('utf-8')
+   st.download_button(
+       "Stáhnout CSV",
+       csv,
+       filename,
+       "text/csv",
+       key='download-csv'
+   )
 
 def show_statistics(df, title):
    """Zobrazení statistik"""
@@ -316,7 +296,7 @@ if st.session_state.authenticated:
            show_statistics(filtered_df, "Prodejní zakázky")
            
            # Export do CSV
-           export_to_csv(filtered_df, "prodejni_zakazky.csv", "sales")
+           export_to_csv(filtered_df, "prodejni_zakazky.csv")
            
            # Seřazení
            sort_col = 'DATE_CREATED' if 'vytvoření' in sort_by else 'REALISATION_DATE'
@@ -344,7 +324,7 @@ if st.session_state.authenticated:
            show_statistics(filtered_df, "Servisní zakázky")
            
            # Export do CSV
-           export_to_csv(filtered_df, "servisni_zakazky.csv", "service")
+           export_to_csv(filtered_df, "servisni_zakazky.csv")
            
            # Seřazení
            sort_col = 'DATE_CREATED' if 'vytvoření' in sort_by else 'REALISATION_DATE'
